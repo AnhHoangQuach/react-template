@@ -2,7 +2,6 @@ import { LoadingButton } from '@mui/lab';
 import { Container, Paper, TextField } from '@mui/material';
 import { useMutation } from '@tanstack/react-query';
 import { InputPassword } from 'components/common';
-import { enqueueSnackbar } from 'notistack';
 import { Controller, useForm } from 'react-hook-form';
 import { useDispatch } from 'react-redux';
 import { signIn } from 'reducers/profileSlice';
@@ -12,23 +11,16 @@ const LoginScreen = () => {
   const dispatch = useDispatch();
   const { control, handleSubmit } = useForm({ mode: 'onChange' });
 
-  const { mutate: login, isLoading } = useMutation(authService.login, {
-    onSuccess: ({ token, ...info }) => {
-      enqueueSnackbar('Login successfully');
-      dispatch(
-        signIn({
-          accessToken: token,
-          ...info,
-        }),
-      );
+  const { mutate: login, isPending } = useMutation({
+    mutationFn: authService.login,
+    onSuccess: (data: LoginResponse) => {
+      dispatch(signIn(data));
     },
   });
 
   const handleClickSubmit = () => {
     handleSubmit((values) => {
-      login({
-        ...(values as LoginBody),
-      });
+      login(values as LoginBody);
     })();
   };
 
@@ -75,7 +67,7 @@ const LoginScreen = () => {
             )}
           />
 
-          <LoadingButton fullWidth variant='contained' loading={isLoading} onClick={handleClickSubmit}>
+          <LoadingButton fullWidth variant='contained' loading={isPending} onClick={handleClickSubmit}>
             Login
           </LoadingButton>
         </div>
